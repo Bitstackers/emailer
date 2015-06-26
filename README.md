@@ -1,4 +1,4 @@
-# Emailer
+# emailer
 
 Library for sending email over SMTP. Heavily inspired by and copied from [@kaisellgren/mailer](https://github.com/kaisellgren/mailer)
 
@@ -13,7 +13,8 @@ main() {
 
   SmtpClient smtpClient = new SmtpClient(options);
 
-  Email email = new Email(new Address('from@domain.tld', 'Some From Name'), 'fqdn.somewhere')
+  Email email = new Email(new Address('from@domain.tld', 
+                          'Some From Name'), 'fqdn.somewhere')
       ..attachments.add(new Attachment.file(new File('afile.stuff')))
       ..to = [new Address('to@domain.tld', 'Some To Name')]
       ..bcc = [new Address('bcc@domain.tld', 'Some Bcc Name')]
