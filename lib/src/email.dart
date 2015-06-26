@@ -82,7 +82,7 @@ class Email {
   Encoding               encoding         = UTF8;
   final String           fqdnSendingHost;
   final Address          from;
-  final String           identityString   = 'dart-mailer';
+  final String           identityString   = 'dart-emailer';
   String                 partHtml;
   String                 partText;
   final List<Address>    _recipients      = [];
