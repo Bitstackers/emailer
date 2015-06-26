@@ -1,6 +1,6 @@
 # Emailer
 
-Library for sending email over SMTP. Heavily inspired by and copied from @kaisellgren/mailer
+Library for sending email over SMTP. Heavily inspired by and copied from [@kaisellgren/mailer](https://github.com/kaisellgren/mailer)
 
 ## Example
 ```dart
