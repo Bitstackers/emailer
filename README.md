@@ -1,8 +1,8 @@
 # Emailer
 
-Library for sending email over SMTP.
+Library for sending email over SMTP. Heavily inspired by and copied from @kaisellgren/mailer
 
-# Example
+## Example
 ```dart
 import 'emailer.dart';
 
