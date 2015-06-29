@@ -101,7 +101,7 @@ class Email {
    * Add all the [attachments] to the [sb] buffer, separated by [boundary].
    */
   void _addAttachments(StringBuffer sb, String boundary) {
-    attachments.forEach((attachment) {
+    attachments.forEach((Attachment attachment) {
       sb.write('--${boundary}\n');
       sb.write('Content-Type: ${attachment.mimeType}; name="${attachment.fileName}"\n');
       sb.write('Content-Transfer-Encoding: base64\n');
