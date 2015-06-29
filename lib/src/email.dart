@@ -92,8 +92,9 @@ class Email {
   /**
    * Constructor.
    *
-   * fqdnSendingHost is SHOULD part of the Message-ID: header per RFC 5322. It
-   * is recommended to set this to the actual sending host.
+   * fqdnSendingHost is a SHOULD part of the Message-ID: header per RFC 5322. It
+   * is recommended to set this to the actual sending host, so we force it here in
+   * the constructor.
    */
   Email(Address this.from, String this.fqdnSendingHost);
 
