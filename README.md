@@ -1,6 +1,7 @@
 # emailer
 
-Library for sending email over SMTP. Heavily inspired by and copied from [@kaisellgren/mailer](https://github.com/kaisellgren/mailer)
+A library for sending email over SMTP. Heavily inspired by and partially copied
+from [@kaisellgren/mailer](https://github.com/kaisellgren/mailer).
 
 ## Example
 ```dart
@@ -13,7 +14,7 @@ main() {
 
   SmtpClient smtpClient = new SmtpClient(options);
 
-  Email email = new Email(new Address('from@domain.tld', 
+  Email email = new Email(new Address('from@domain.tld',
                           'Some From Name'), 'fqdn.somewhere')
       ..attachments.add(new Attachment.file(new File('afile.stuff')))
       ..to = [new Address('to@domain.tld', 'Some To Name')]
