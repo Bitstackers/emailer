@@ -19,11 +19,11 @@ import 'dart:io';
  */
 class SmtpOptions {
   String hostName;
-  bool   ignoreBadCertificate = true;
-  String name                 = Platform.localHostname;
+  bool ignoreBadCertificate = true;
+  String name = Platform.localHostname;
   String password;
-  int    port                 = 465;
-  bool   secure               = false;
+  int port = 465;
+  bool secure = false;
   String username;
 }
 
@@ -32,6 +32,6 @@ class SmtpOptions {
  */
 class GmailSmtpOptions extends SmtpOptions {
   final String hostName = 'smtp.gmail.com';
-  final int    port     = 465;
-  final bool   secure   = true;
+  final int port = 465;
+  final bool secure = true;
 }

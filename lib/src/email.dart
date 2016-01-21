@@ -23,13 +23,7 @@ import 'package:intl/intl.dart';
 /**
  * The kinds of emails this library supports.
  */
-enum EmailKind {Empty,
-                Text,
-                Html,
-                TextHtml,
-                TextAttach,
-                HtmlAttach,
-                TextHtmlAttach}
+enum EmailKind { empty, text, html, textHtml, textAttach, htmlAttach, textHtmlAttach }
 
 /**
  * This class represents an email address. It MUST contain a valid email address
@@ -41,7 +35,7 @@ class Address {
   String _addrSpec;
   String _displayName;
 
-  String get addrSpec    => _addrSpec;
+  String get addrSpec => _addrSpec;
   String get displayName => _displayName;
 
   /**
@@ -59,7 +53,7 @@ class Address {
   String render() {
     final StringBuffer sb = new StringBuffer();
 
-    if(displayName.isEmpty) {
+    if (displayName.isEmpty) {
       sb.write(addrSpec);
     } else {
       sb.write(_encode(_displayName));
@@ -73,7 +67,7 @@ class Address {
    * Remove linefeeds, tabs and potentially harmful characters from [value].
    */
   _sanitize(String value) {
-    if(value == null) {
+    if (value == null) {
       return '';
     }
 
@@ -88,18 +82,18 @@ class Address {
  * Recipients are defined as lists of [Address]'s.
  */
 class Email {
-  final List<Attachment> attachments      = [];
-  final List<Address>    _ccRecipients    = [];
-  int                    _counter         = 0;
-  Encoding               encoding         = UTF8;
-  final String           fqdnSendingHost;
-  final Address          from;
-  final String           identityString   = 'dart-emailer';
-  String                 partHtml;
-  String                 partText;
-  final List<Address>    _recipients      = [];
-  String                 subject;
-  final List<Address>    _toRecipients    = [];
+  final List<Attachment> attachments = [];
+  final List<Address> _ccRecipients = [];
+  int _counter = 0;
+  Encoding encoding = UTF8;
+  final String fqdnSendingHost;
+  final Address from;
+  final String identityString = 'dart-emailer';
+  String partHtml;
+  String partText;
+  final List<Address> _recipients = [];
+  String subject;
+  final List<Address> _toRecipients = [];
 
   /**
    * Constructor.
@@ -128,7 +122,7 @@ class Email {
    * of [_ccRecipients].
    */
   void _addCc(StringBuffer sb) {
-    if(!_ccRecipients.isEmpty) {
+    if (!_ccRecipients.isEmpty) {
       final String cc = _ccRecipients.map((recipient) => recipient.render()).toList().join(',');
       sb.write('Cc: ${cc}\n');
     }
@@ -138,7 +132,8 @@ class Email {
    * Add the Date: header to the [sb] buffer.
    */
   void _addDate(StringBuffer sb) {
-    sb.write('Date: ${new DateFormat('EEE, dd MMM yyyy HH:mm:ss +0000').format(new DateTime.now().toUtc())}\n');
+    sb.write(
+        'Date: ${new DateFormat('EEE, dd MMM yyyy HH:mm:ss +0000').format(new DateTime.now().toUtc())}\n');
   }
 
   /**
@@ -154,7 +149,7 @@ class Email {
    */
   void _addHtmlPart(StringBuffer sb, [String boundary = '']) {
     String lf = '';
-    if(boundary.isNotEmpty) {
+    if (boundary.isNotEmpty) {
       lf = '\n\n';
       sb.write('--${boundary}\n');
     }
@@ -168,9 +163,9 @@ class Email {
    */
   void _addMessageId(StringBuffer sb) {
     final int now = new DateTime.now().millisecondsSinceEpoch;
-    final int random1 = new Random(now).nextInt((1<<32) - 1);
-    final int random2 = new Random(now+1).nextInt((1<<32) - 1);
-    final int random3 = new Random(now+2).nextInt((1<<32) - 1);
+    final int random1 = new Random(now).nextInt((1 << 32) - 1);
+    final int random2 = new Random(now + 1).nextInt((1 << 32) - 1);
+    final int random3 = new Random(now + 2).nextInt((1 << 32) - 1);
 
     sb.write('Message-ID: <${random1}.${random2}.${random3}.${now}@${fqdnSendingHost}>\n');
   }
@@ -186,7 +181,7 @@ class Email {
    * Add the Subject: header to the [sb] buffer.
    */
   void _addSubject(StringBuffer sb) {
-    if(subject != null && subject.isNotEmpty) {
+    if (subject != null && subject.isNotEmpty) {
       final String b64 = CryptoUtils.bytesToBase64(UTF8.encode(subject), false, true);
       final List<String> b64List = b64.split('\r\n');
       sb.write('Subject: ${b64List.map((value) => '=?utf-8?B?${value}?=').join('\r\n ')}\n');
@@ -199,7 +194,7 @@ class Email {
    */
   void _addTextPart(StringBuffer sb, [String boundary = '']) {
     String lf = '';
-    if(boundary.isNotEmpty) {
+    if (boundary.isNotEmpty) {
       lf = '\n\n';
       sb.write('--${boundary}\n');
     }
@@ -213,7 +208,7 @@ class Email {
    * of [_tocRecipients].
    */
   void _addTo(StringBuffer sb) {
-    if(!_toRecipients.isEmpty) {
+    if (!_toRecipients.isEmpty) {
       final String to = _toRecipients.map((recipient) => recipient.render()).toList().join(',');
       sb.write('To: ${to}\n');
     }
@@ -264,20 +259,21 @@ class Email {
     _addTo(buffer);
     _addCc(buffer);
 
-    switch(emailKind) {
-      case EmailKind.Empty:
+    switch (emailKind) {
+      case EmailKind.empty:
+
         /// Nothing to do! So easy. :o)
         break;
 
-      case EmailKind.Text:
+      case EmailKind.text:
         _addTextPart(buffer);
         break;
 
-      case EmailKind.Html:
+      case EmailKind.html:
         _addHtmlPart(buffer);
         break;
 
-      case EmailKind.TextHtml:
+      case EmailKind.textHtml:
         final String boundary = _getBoundary();
 
         buffer.write('Content-Type: multipart/alternative; boundary="${boundary}"\n\n');
@@ -288,7 +284,7 @@ class Email {
         buffer.write('--${boundary}--');
         break;
 
-      case EmailKind.TextAttach:
+      case EmailKind.textAttach:
         final String boundary = _getBoundary();
 
         buffer.write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
@@ -300,7 +296,7 @@ class Email {
 
         break;
 
-      case EmailKind.HtmlAttach:
+      case EmailKind.htmlAttach:
         final String boundary = _getBoundary();
 
         buffer.write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
@@ -312,7 +308,7 @@ class Email {
 
         break;
 
-      case EmailKind.TextHtmlAttach:
+      case EmailKind.textHtmlAttach:
         final String outerBoundary = _getBoundary();
         final String innerBoundary = _getBoundary();
 
@@ -340,37 +336,37 @@ class Email {
    * This figures out what kind of email we're trying to send.
    */
   EmailKind _getEmailKind() {
-    if(partText != null && partHtml == null && attachments.isEmpty) {
-      return EmailKind.Text;
+    if (partText != null && partHtml == null && attachments.isEmpty) {
+      return EmailKind.text;
     }
 
-    if(partText == null && partHtml != null && attachments.isEmpty) {
-      return EmailKind.Html;
+    if (partText == null && partHtml != null && attachments.isEmpty) {
+      return EmailKind.html;
     }
 
-    if(partText != null && partHtml != null && attachments.isEmpty) {
-      return EmailKind.TextHtml;
+    if (partText != null && partHtml != null && attachments.isEmpty) {
+      return EmailKind.textHtml;
     }
 
-    if(partText == null && partHtml == null && attachments.isNotEmpty) {
+    if (partText == null && partHtml == null && attachments.isNotEmpty) {
       /// This case can be handled in many ways. The most simple seems to be to
       /// just create a TextAttach email with an empty partText.
-      return EmailKind.TextAttach;
+      return EmailKind.textAttach;
     }
 
-    if(partText != null && partHtml == null && attachments.isNotEmpty) {
-      return EmailKind.TextAttach;
+    if (partText != null && partHtml == null && attachments.isNotEmpty) {
+      return EmailKind.textAttach;
     }
 
-    if(partText == null && partHtml != null && attachments.isNotEmpty) {
-      return EmailKind.HtmlAttach;
+    if (partText == null && partHtml != null && attachments.isNotEmpty) {
+      return EmailKind.htmlAttach;
     }
 
-    if(partText != null && partHtml != null && attachments.isNotEmpty) {
-      return EmailKind.TextHtmlAttach;
+    if (partText != null && partHtml != null && attachments.isNotEmpty) {
+      return EmailKind.textHtmlAttach;
     }
 
-    return EmailKind.Empty;
+    return EmailKind.empty;
   }
 
   /**
@@ -391,5 +387,4 @@ class Email {
 /**
  * Return the BASE64 for [input]. Expects input to be UTF-8.
  */
-String _encode(String input) =>
-    '=?utf-8?B?${CryptoUtils.bytesToBase64(UTF8.encode(input))}?=';
+String _encode(String input) => '=?utf-8?B?${CryptoUtils.bytesToBase64(UTF8.encode(input))}?=';

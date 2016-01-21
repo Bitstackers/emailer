@@ -27,15 +27,15 @@ typedef void SmtpResponseAction(String message);
  * A SMTP client for sending emails.
  */
 class SmtpClient {
-  Socket             _connection;
+  Socket _connection;
   SmtpResponseAction _currentAction;
-  Email              _email;
-  final Logger       _logger                   = new Logger('Emailer');
-  StreamController   _onIdleController         = new StreamController();
-  StreamController   _onSendController         = new StreamController();
-  final SmtpOptions  _options;
-  int                _recipientIndex           = 0;
-  final List<int>    _remainder                = [];
+  Email _email;
+  final Logger _logger = new Logger('Emailer');
+  StreamController<bool> _onIdleController = new StreamController<bool>();
+  StreamController<Email> _onSendController = new StreamController<Email>();
+  final SmtpOptions _options;
+  int _recipientIndex = 0;
+  final List<int> _remainder = [];
   final List<String> _supportedAuthentications = [];
 
   /**
@@ -52,7 +52,7 @@ class SmtpClient {
    * Check that authentication went well, and if so, go idle.
    */
   void _actionAuthenticateComplete(String message) {
-    if(message.startsWith('2') == false) {
+    if (message.startsWith('2') == false) {
       throw 'Invalid login: ${message}';
     }
 
@@ -64,7 +64,7 @@ class SmtpClient {
    * Send the [_options.username] to the server.
    */
   void _actionAuthenticateLoginUser(String message) {
-    if(message.startsWith('334 VXNlcm5hbWU6') == false) {
+    if (message.startsWith('334 VXNlcm5hbWU6') == false) {
       throw 'Invalid logic sequence while waiting for "334 VXNlcm5hbWU6": ${message}';
     }
 
@@ -76,7 +76,7 @@ class SmtpClient {
    * Send the [_options.password] to the server.
    */
   void _actionAuthenticateLoginPassword(String message) {
-    if(message.startsWith('334 UGFzc3dvcmQ6') == false) {
+    if (message.startsWith('334 UGFzc3dvcmQ6') == false) {
       throw 'Invalid logic sequence while waiting for "334 UGFzc3dvcmQ6": ${message}';
     }
 
@@ -88,7 +88,7 @@ class SmtpClient {
    * If DATA went OK, move on to sending the actual email.
    */
   void _actionData(String message) {
-    if(message.startsWith('2') == false && message.startsWith('3') == false) {
+    if (message.startsWith('2') == false && message.startsWith('3') == false) {
       /// The response should be either 354 or 250.
       throw 'DATA command failed: ${message}';
     }
@@ -102,26 +102,28 @@ class SmtpClient {
    * supported authentication methods to [_supportedAuthentications].
    */
   void _actionEHLO(String message) {
-    if(message.startsWith('2') == false) {
+    if (message.startsWith('2') == false) {
       /// EHLO wasn't cool? Let's go with HELO.
       _currentAction = _actionHELO;
       sendCommand('HELO ${_options.name}');
       return;
     }
 
-    if(_connection is! SecureSocket && new RegExp('[ \\-]STARTTLS\\r?\$', caseSensitive: false, multiLine: true).hasMatch(message)) {
+    if (_connection is! SecureSocket &&
+        new RegExp('[ \\-]STARTTLS\\r?\$', caseSensitive: false, multiLine: true)
+            .hasMatch(message)) {
       /// The server supports TLS and we haven't switched to it yet, so let's do it.
       sendCommand('STARTTLS');
       _currentAction = _actionStartTLS;
       return;
     }
 
-    final String AUTH = 'AUTH(?:\\s+[^\\n]*\\s+|\\s+)';
-    _addAuthentications('PLAIN', new RegExp('${AUTH}PLAIN', caseSensitive: false), message);
-    _addAuthentications('LOGIN', new RegExp('${AUTH}LOGIN', caseSensitive: false), message);
-    _addAuthentications('CRAM-MD5', new RegExp('${AUTH}CRAM-MD5', caseSensitive: false), message);
-    _addAuthentications('XOAUTH', new RegExp('${AUTH}XOAUTH', caseSensitive: false), message);
-    _addAuthentications('XOAUTH2', new RegExp('${AUTH}XOAUTH2', caseSensitive: false), message);
+    final String auth = 'AUTH(?:\\s+[^\\n]*\\s+|\\s+)';
+    _addAuthentications('PLAIN', new RegExp('${auth}PLAIN', caseSensitive: false), message);
+    _addAuthentications('LOGIN', new RegExp('${auth}LOGIN', caseSensitive: false), message);
+    _addAuthentications('CRAM-MD5', new RegExp('${auth}CRAM-MD5', caseSensitive: false), message);
+    _addAuthentications('XOAUTH', new RegExp('${auth}XOAUTH', caseSensitive: false), message);
+    _addAuthentications('XOAUTH2', new RegExp('${auth}XOAUTH2', caseSensitive: false), message);
 
     _authenticateUser();
   }
@@ -130,8 +132,8 @@ class SmtpClient {
    * Check server greeting and if OK send EHLO.
    */
   void _actionGreeting(String message) {
-    if(message.startsWith('220') == false) {
-      throw('Invalid greeting from server: ${message}');
+    if (message.startsWith('220') == false) {
+      throw ('Invalid greeting from server: ${message}');
     }
 
     _currentAction = _actionEHLO;
@@ -142,8 +144,8 @@ class SmtpClient {
    * If HELO is accepted, move on to authenticate user.
    */
   void _actionHELO(String message) {
-    if(message.startsWith('2') == false) {
-      throw('Invalid response for EHLO/HELO: ${message}');
+    if (message.startsWith('2') == false) {
+      throw ('Invalid response for EHLO/HELO: ${message}');
     }
 
     _authenticateUser();
@@ -153,7 +155,7 @@ class SmtpClient {
    * If sending the email DATA went OK, move on to closing the connection.
    */
   _actionFinishEmail(String message) {
-    if(message.startsWith('2') == false) {
+    if (message.startsWith('2') == false) {
       throw 'Could not send email: ${message}';
     }
 
@@ -168,7 +170,7 @@ class SmtpClient {
    * kind.
    */
   void _actionIdle(String message) {
-    if(int.parse(message.substring(0, 1)) > 3) {
+    if (int.parse(message.substring(0, 1)) > 3) {
       throw 'Error: ${message}';
     }
 
@@ -179,13 +181,13 @@ class SmtpClient {
    * If MAIL FROM succeeded send the RCPT TO: commands.
    */
   void _actionMail(String message) {
-    if(message.startsWith('2') == false) {
+    if (message.startsWith('2') == false) {
       throw 'MAIL FROM command failed: ${message}';
     }
 
     Address recipient;
 
-    if(_recipientIndex == _email.recipients.length - 1) {
+    if (_recipientIndex == _email.recipients.length - 1) {
       /// We are processing the last recipient.
       _recipientIndex = 0;
 
@@ -205,8 +207,8 @@ class SmtpClient {
    * If RCPT TO: commands went OK, move on to DATA.
    */
   void _actionRecipient(String message) {
-    if(message.startsWith('2') == false) {
-      throw('Recipient failure: ${message}');
+    if (message.startsWith('2') == false) {
+      throw ('Recipient failure: ${message}');
     }
 
     _currentAction = _actionData;
@@ -217,7 +219,7 @@ class SmtpClient {
    * Upgrade connection if STARTTLS succeeded.
    */
   void _actionStartTLS(String message) {
-    if(message.startsWith('2') == false) {
+    if (message.startsWith('2') == false) {
       _currentAction = _actionHELO;
       sendCommand('HELO ${_options.name}');
       return;
@@ -231,7 +233,7 @@ class SmtpClient {
    * found in [message].
    */
   void _addAuthentications(String kind, RegExp regex, String message) {
-    if(regex.hasMatch(message)) {
+    if (regex.hasMatch(message)) {
       _supportedAuthentications.add(kind);
     }
   }
@@ -241,7 +243,7 @@ class SmtpClient {
    * command.
    */
   void _authenticateUser() {
-    if(_options.username == null) {
+    if (_options.username == null) {
       _currentAction = _actionIdle;
       _onIdleController.add(true);
       return;
@@ -264,10 +266,9 @@ class SmtpClient {
   Future _connect() {
     return new Future(() {
       /// Secured connection was demanded by the user.
-      if(_options.secure) {
-        return SecureSocket.connect(_options.hostName,
-                                    _options.port,
-                                    onBadCertificate: (_) => _options.ignoreBadCertificate);
+      if (_options.secure) {
+        return SecureSocket.connect(_options.hostName, _options.port,
+            onBadCertificate: (_) => _options.ignoreBadCertificate);
       }
 
       return Socket.connect(_options.hostName, _options.port);
@@ -284,20 +285,20 @@ class SmtpClient {
    * This [onData] handler reads the message that the server sent us.
    */
   void _onData(List<int> chunk) {
-    if(chunk == null || chunk.length == 0) {
+    if (chunk == null || chunk.length == 0) {
       return;
     }
 
     _remainder.addAll(chunk);
 
-    if(_remainder.last != 0x0A) {
+    if (_remainder.last != 0x0A) {
       /// If the message comes in pieces, it does not end with \n.
       return;
     }
 
     final String message = new String.fromCharCodes(_remainder);
 
-    if(new RegExp(r'(?:^|\n)\d{3}-[^\n]+\n$').hasMatch(message)) {
+    if (new RegExp(r'(?:^|\n)\d{3}-[^\n]+\n$').hasMatch(message)) {
       /// A multi line reply, wait until ending.
       return;
     }
@@ -306,7 +307,7 @@ class SmtpClient {
 
     _logger.fine(message);
 
-    if(_currentAction != null) {
+    if (_currentAction != null) {
       try {
         _currentAction(message);
       } catch (e) {
@@ -347,7 +348,7 @@ class SmtpClient {
         });
 
         onSend.listen((Email sentEmail) {
-          if(sentEmail == email) {
+          if (sentEmail == email) {
             timeout.cancel();
             completer.complete(true);
           }
@@ -374,14 +375,15 @@ class SmtpClient {
    * Upgrades the connection to use TLS.
    */
   void _upgradeConnection() {
-    SecureSocket.secure(_connection, onBadCertificate: (_) => _options.ignoreBadCertificate)
-      .then((SecureSocket secured) {
-        _connection = secured;
-        _connection.listen(_onData, onError: _onSendController.addError);
-        _connection.done.catchError(_onSendController.addError);
+    SecureSocket
+        .secure(_connection, onBadCertificate: (_) => _options.ignoreBadCertificate)
+        .then((SecureSocket secured) {
+      _connection = secured;
+      _connection.listen(_onData, onError: _onSendController.addError);
+      _connection.done.catchError(_onSendController.addError);
 
-        _currentAction = _actionEHLO;
-        sendCommand('EHLO ${_options.name}');
-      });
+      _currentAction = _actionEHLO;
+      sendCommand('EHLO ${_options.name}');
+    });
   }
 }

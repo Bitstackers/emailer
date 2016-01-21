@@ -23,9 +23,9 @@ import 'package:path/path.dart';
  */
 class Attachment {
   List<int> _data;
-  File      _file;
-  String    _fileName;
-  String    _mimeType;
+  File _file;
+  String _fileName;
+  String _mimeType;
 
   /**
    * Constructor for attachment based on a list of int.
