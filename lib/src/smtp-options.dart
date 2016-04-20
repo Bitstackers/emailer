@@ -31,7 +31,9 @@ class SmtpOptions {
  * Predefined options for connecting to Gmail SMTP.
  */
 class GmailSmtpOptions extends SmtpOptions {
-  final String hostName = 'smtp.gmail.com';
-  final int port = 465;
-  final bool secure = true;
+  GmailSmtpOptions() {
+    hostName = 'smtp.gmail.com';
+    port = 465;
+    secure = true;
+  }
 }

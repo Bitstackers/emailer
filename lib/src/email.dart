@@ -23,7 +23,15 @@ import 'package:intl/intl.dart';
 /**
  * The kinds of emails this library supports.
  */
-enum EmailKind { empty, text, html, textHtml, textAttach, htmlAttach, textHtmlAttach }
+enum EmailKind {
+  empty,
+  text,
+  html,
+  textHtml,
+  textAttach,
+  htmlAttach,
+  textHtmlAttach
+}
 
 /**
  * This class represents an email address. It MUST contain a valid email address
@@ -71,7 +79,8 @@ class Address {
       return '';
     }
 
-    return value.replaceAll(new RegExp('(\\r|\\n|\\t|"|,|<|>)+', caseSensitive: false), '');
+    return value.replaceAll(
+        new RegExp('(\\r|\\n|\\t|"|,|<|>)+', caseSensitive: false), '');
   }
 }
 
@@ -111,10 +120,12 @@ class Email {
    */
   void _addAttachments(StringBuffer sb, String boundary) {
     attachments.forEach((Attachment attachment) {
-      sb.write('--${boundary}\n');
-      sb.write('Content-Type: ${attachment.mimeType}; name="${attachment.fileName}"\n');
-      sb.write('Content-Transfer-Encoding: base64\n');
-      sb.write('Content-Disposition: attachment; filename="${attachment.fileName}"\n\n');
+      sb.writeln('--${boundary}');
+      sb.writeln(
+          'Content-Type: ${attachment.mimeType}; name="${attachment.fileName}"');
+      sb.writeln('Content-Transfer-Encoding: base64');
+      sb.write(
+          'Content-Disposition: attachment; filename="${attachment.fileName}"\n\n');
       sb.write('${attachment.content}\n\n');
     });
   }
@@ -125,8 +136,11 @@ class Email {
    */
   void _addCc(StringBuffer sb) {
     if (!_ccRecipients.isEmpty) {
-      final String cc = _ccRecipients.map((recipient) => recipient.render()).toList().join(',');
-      sb.write('Cc: ${cc}\n');
+      final String cc = _ccRecipients
+          .map((recipient) => recipient.render())
+          .toList()
+          .join(',');
+      sb.writeln('Cc: ${cc}');
     }
   }
 
@@ -134,15 +148,15 @@ class Email {
    * Add the Date: header to the [sb] buffer.
    */
   void _addDate(StringBuffer sb) {
-    sb.write(
-        'Date: ${new DateFormat('EEE, dd MMM yyyy HH:mm:ss +0000').format(new DateTime.now().toUtc())}\n');
+    sb.writeln(
+        'Date: ${new DateFormat('EEE, dd MMM yyyy HH:mm:ss +0000').format(new DateTime.now().toUtc())}');
   }
 
   /**
    * Add the From: header to the [sb] buffer.
    */
   void _addFrom(StringBuffer sb) {
-    sb.write('From: ${from.render()}\n');
+    sb.writeln('From: ${from.render()}');
   }
 
   /**
@@ -153,9 +167,9 @@ class Email {
     String lf = '';
     if (boundary.isNotEmpty) {
       lf = '\n\n';
-      sb.write('--${boundary}\n');
+      sb.writeln('--${boundary}');
     }
-    sb.write('Content-Type: text/html; charset="${encoding.name}"\n');
+    sb.writeln('Content-Type: text/html; charset="${encoding.name}"');
     sb.write('Content-Transfer-Encoding: 7bit\n\n');
     sb.write('${partHtml == null ? '' : partHtml}${lf}');
   }
@@ -183,9 +197,11 @@ class Email {
    */
   void _addSubject(StringBuffer sb) {
     if (subject != null && subject.isNotEmpty) {
-      final String b64 = CryptoUtils.bytesToBase64(UTF8.encode(subject), false, true);
+      final String b64 =
+          CryptoUtils.bytesToBase64(UTF8.encode(subject), false, true);
       final List<String> b64List = b64.split('\r\n');
-      sb.write('Subject: ${b64List.map((value) => '=?utf-8?B?${value}?=').join('\r\n ')}\n');
+      sb.writeln(
+          'Subject: ${b64List.map((value) => '=?utf-8?B?${value}?=').join('\r\n ')}');
     }
   }
 
@@ -197,9 +213,9 @@ class Email {
     String lf = '';
     if (boundary.isNotEmpty) {
       lf = '\n\n';
-      sb.write('--${boundary}\n');
+      sb.writeln('--${boundary}');
     }
-    sb.write('Content-Type: text/plain; charset="${encoding.name}"\n');
+    sb.writeln('Content-Type: text/plain; charset="${encoding.name}"');
     sb.write('Content-Transfer-Encoding: 7bit\n\n');
     sb.write('${partText == null ? '' : partText}${lf}');
   }
@@ -210,7 +226,10 @@ class Email {
    */
   void _addTo(StringBuffer sb) {
     if (!_toRecipients.isEmpty) {
-      final String to = _toRecipients.map((recipient) => recipient.render()).toList().join(',');
+      final String to = _toRecipients
+          .map((recipient) => recipient.render())
+          .toList()
+          .join(',');
       sb.write('To: ${to}\n');
     }
   }
@@ -287,7 +306,8 @@ class Email {
       case EmailKind.textHtml:
         final String boundary = _getBoundary();
 
-        buffer.write('Content-Type: multipart/alternative; boundary="${boundary}"\n\n');
+        buffer.write(
+            'Content-Type: multipart/alternative; boundary="${boundary}"\n\n');
 
         _addTextPart(buffer, boundary);
         _addHtmlPart(buffer, boundary);
@@ -298,7 +318,8 @@ class Email {
       case EmailKind.textAttach:
         final String boundary = _getBoundary();
 
-        buffer.write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
+        buffer
+            .write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
 
         _addTextPart(buffer, boundary);
         _addAttachments(buffer, boundary);
@@ -310,7 +331,8 @@ class Email {
       case EmailKind.htmlAttach:
         final String boundary = _getBoundary();
 
-        buffer.write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
+        buffer
+            .write('Content-Type: multipart/mixed; boundary="${boundary}"\n\n');
 
         _addHtmlPart(buffer, boundary);
         _addAttachments(buffer, boundary);
@@ -323,10 +345,12 @@ class Email {
         final String outerBoundary = _getBoundary();
         final String innerBoundary = _getBoundary();
 
-        buffer.write('Content-Type: multipart/mixed; boundary="${outerBoundary}"\n\n');
+        buffer.write(
+            'Content-Type: multipart/mixed; boundary="${outerBoundary}"\n\n');
 
         buffer.write('--${outerBoundary}\n');
-        buffer.write('Content-Type: multipart/alternative; boundary="${innerBoundary}"\n\n');
+        buffer.write(
+            'Content-Type: multipart/alternative; boundary="${innerBoundary}"\n\n');
 
         _addTextPart(buffer, innerBoundary);
         _addHtmlPart(buffer, innerBoundary);
