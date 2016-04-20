@@ -85,6 +85,7 @@ class Email {
   final List<Attachment> attachments = [];
   final List<Address> _ccRecipients = [];
   int _counter = 0;
+  String customMessageId = '';
   Encoding encoding = UTF8;
   final String fqdnSendingHost;
   final Address from;
@@ -94,6 +95,7 @@ class Email {
   final List<Address> _recipients = [];
   String subject;
   final List<Address> _toRecipients = [];
+  final Map<String, String> _xHeaders = new Map<String, String>();
 
   /**
    * Constructor.
@@ -162,19 +164,18 @@ class Email {
    * Add the Message-ID: header to the [sb] buffer.
    */
   void _addMessageId(StringBuffer sb) {
-    final int now = new DateTime.now().millisecondsSinceEpoch;
-    final int random1 = new Random(now).nextInt((1 << 32) - 1);
-    final int random2 = new Random(now + 1).nextInt((1 << 32) - 1);
-    final int random3 = new Random(now + 2).nextInt((1 << 32) - 1);
-
-    sb.write('Message-ID: <${random1}.${random2}.${random3}.${now}@${fqdnSendingHost}>\n');
+    if (customMessageId.isEmpty) {
+      sb.writeln('Message-ID: <$id@$fqdnSendingHost>');
+    } else {
+      sb.writeln('Message-ID: $customMessageId');
+    }
   }
 
   /**
    * Add the Mime-Version: header to the [sb] buffer.
    */
   void _addMimeVersion(StringBuffer sb) {
-    sb.write('Mime-Version: 1.0\n');
+    sb.writeln('Mime-Version: 1.0');
   }
 
   /**
@@ -217,8 +218,17 @@ class Email {
   /**
    * Add the x-Mailer: header to the [sb] buffer.
    */
+  void _addXHeader(StringBuffer sb) {
+    _xHeaders.forEach((String key, String value) {
+      sb.writeln('X-$key: $value');
+    });
+  }
+
+  /**
+   * Add the x-Mailer: header to the [sb] buffer.
+   */
   void _addXMailer(StringBuffer sb) {
-    sb.write('X-Mailer: Dart Emailer library\n');
+    sb.writeln('X-Mailer: Dart Emailer library');
   }
 
   /**
@@ -253,6 +263,7 @@ class Email {
     _addMessageId(buffer);
     _addDate(buffer);
     _addMimeVersion(buffer);
+    _addXHeader(buffer);
     _addXMailer(buffer);
     _addSubject(buffer);
     _addFrom(buffer);
@@ -382,9 +393,32 @@ class Email {
     _toRecipients.addAll(toList);
     _recipients.addAll(toList);
   }
+
+  /**
+   * Add X header [headerName] with [headerValue] to this email.
+   *
+   * NOTE: Does NOT do any kind of encoding on the given values.
+   *
+   * Usage:
+   *  xHeader('Foo', 'bar');
+   * Adds 'X-Foo: bar' to the email.
+   */
+  void xHeader(String headerName, String headerValue) {
+    _xHeaders[headerName] = headerValue;
+  }
 }
 
 /**
  * Return the BASE64 for [input]. Expects input to be UTF-8.
  */
-String _encode(String input) => '=?utf-8?B?${CryptoUtils.bytesToBase64(UTF8.encode(input))}?=';
+String _encode(String input) =>
+    '=?utf-8?B?${CryptoUtils.bytesToBase64(UTF8.encode(input))}?=';
+
+/**
+ * Return an id constructed from a epoch timestamp and a random 32 bit number.
+ */
+String get id {
+  final int now = new DateTime.now().microsecondsSinceEpoch;
+  final int random1 = new Random(now).nextInt((1 << 32) - 1);
+  return '$random1$now';
+}
