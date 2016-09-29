@@ -1,5 +1,5 @@
 name: emailer
-version: 0.9.2
+version: 0.9.2+1
 description: A library for sending email over SMTP.
 environment:
   sdk: '>=1.0.0 <2.0.0'
@@ -8,3 +8,4 @@ dependencies:
   intl: any
   logging: any
   mime: any
+  path: any
